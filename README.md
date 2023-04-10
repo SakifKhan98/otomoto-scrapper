@@ -40,6 +40,13 @@ External packages used:
 
     $ node index.js
 
+## Sample Output
+
+### Following files in the directory are sample files which will be generated after running the script.
+
+    listItems_4_sample.json
+    truckItems_page_4_sample.xlsx
+
 ## Function Description:
 
 <br/><br/>
@@ -69,10 +76,12 @@ External packages used:
 
 2. I was not 100% sure about what was meant by "Accessing more ads from this link than the limit allows (max 50 pages)?". But I think we can replicate the API call format used by otomoto to access more data then we are allowed to access.
 
-3. CI/CD with github is set.
+3. I have basic ideas about Github Actions as CI/CD tool. But can learn more jenkins or other similar tools if needed.
 
 4. I've researched a bit and found that we can use mitm proxy tool for scrapping mobile applications (like otomot) but not 100% sure how to do that. But can give that a try later if needed.
 
 5. The performance can be improved by adding some waiting function. (like waitForUntil and its various values).
 
-6. Codes can be more cleaner by making it more modular. By modular I mean that extracting various functions to separate file and importing them from there to use in the main index.js file.
+6. We can expose this scrapper as an API using express.js along with other authentication/authorization systems and build a Front-End using ReactJS or VueJS and deploy it in a server and make it easily accessible for use.
+
+7. Codes can be more cleaner by making it more modular. By modular I mean that extracting various functions to separate file and importing them from there to use in the main index.js file.
