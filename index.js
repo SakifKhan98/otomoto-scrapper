@@ -46,6 +46,7 @@ let fs = require("fs");
   const listItems = await addItems(page);
   let json = JSON.stringify(listItems);
   let rand = Math.floor(Math.random() * 1001);
+  // code for exporting data to a json file
   fs.writeFile(`listItems_${rand}.json`, json, "utf8", (err) => {
     if (err) throw err;
     console.log("JSON Exporting Completed!");
@@ -135,14 +136,18 @@ const scrapeTruckItem = async (url) => {
 /** getNextPageUrl navigates to the next page **/
 
 const getNextPageUrl = async (page) => {
-  while (
-    await page.$(
-      "ul.pagination-list > li[title='Next Page'][aria-disabled='false']"
-    )
-  ) {
-    await page.waitForSelector("ul.pagination-list > li[title='Next Page']", {
-      waitUntil: "domcontentloaded",
-    });
-    await page.click("ul.pagination-list > li[title='Next Page']");
+  try {
+    while (
+      await page.$(
+        "ul.pagination-list > li[title='Next Page'][aria-disabled='false']"
+      )
+    ) {
+      await page.waitForSelector("ul.pagination-list > li[title='Next Page']", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.click("ul.pagination-list > li[title='Next Page']");
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
