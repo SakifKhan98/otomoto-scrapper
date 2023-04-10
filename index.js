@@ -3,9 +3,11 @@ const cheerio = require("cheerio");
 const xlsx = require("xlsx");
 let fs = require("fs");
 
+/** This is the main function where all other functions are being invoked in a nested way **/
+/** All headless:false are commented out for fast operation. You can comment it in to check if the code is really working **/
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false,
     defaultViewport: {
       width: 1920,
       height: 1080,
@@ -14,58 +16,16 @@ let fs = require("fs");
 
   const page = await browser.newPage();
   await page.goto(
-    "https://www.otomoto.pl/ciezarowe/uzytkowe/mercedes-benz/od-2014/q-actros?search%5Bfilter_enum_damaged%5D=0&search%5Border%5D=created_at%3Adesc",
-    { timeout: 8000 }
+    "https://www.otomoto.pl/ciezarowe/uzytkowe/mercedes-benz/od-2014/q-actros?search%5Bfilter_enum_damaged%5D=0&search%5Border%5D=created_at%3Adesc"
   );
   await page.waitForSelector("#onetrust-button-group");
   await page.click("#onetrust-accept-btn-handler");
 
-  /** Code for using the Single Scrapper Function to scrap single items **/
-  const allAdsLinks = await page.$$eval(
-    "article[data-testid='listing-ad'] > div > h2 > a",
-    (ads) => ads.map((ad) => ad.href)
-  );
-
-  const scrapedData = [];
-  try {
-    for (let link of allAdsLinks) {
-      const data = await scrapeTruckItem(link);
-      scrapedData.push(data);
-    }
-  } catch (error) {
-    console.log(error);
-  }
-
-  /** Code for exporting data to Excel Sheet **/
-  const ab = xlsx.utils.book_new();
-  const as = xlsx.utils.json_to_sheet(scrapedData);
-  xlsx.utils.book_append_sheet(ab, as);
-  xlsx.writeFile(ab, "truckItems.xlsx");
-
-  /** Code for usecase of addItems function **/
-  const listItems = await addItems(page);
-  let json = JSON.stringify(listItems);
-  let rand = Math.floor(Math.random() * 1001);
-  // code for exporting data to a json file
-  fs.writeFile(`listItems_${rand}.json`, json, "utf8", (err) => {
-    if (err) throw err;
-    console.log("JSON Exporting Completed!");
-  });
-
-  /** Code for usecase of getTotalAdsCount function **/
-  const adsAvailable = await getTotalAdsCount(page);
-
-  /** Code for usecase of getNextPageUrl function **/
   await getNextPageUrl(page);
-
-  /** Console logs are for checking the  **/
-  // console.log(adsAvailable);
-  // console.log(listItems);
-  // await browser.close();
+  await browser.close();
 })();
 
 /** addItems function will go through the loaded page and scrap all the ad listings url along with their distinct itemid **/
-
 const addItems = async (page) => {
   return await page.$$eval("article[data-testid='listing-ad']", (elements) =>
     elements.map((e) => ({
@@ -76,7 +36,6 @@ const addItems = async (page) => {
 };
 
 /** getTotalAdsCount returns the total number of ad-listing present in the loaded page **/
-
 const getTotalAdsCount = async (page) => {
   return await page.$$eval(
     "article[data-testid='listing-ad']",
@@ -85,10 +44,9 @@ const getTotalAdsCount = async (page) => {
 };
 
 /** scrapeTruckItem returns the itemId, title, price, registrationDate, productionDate, mileage & power from the page of single loaded ad **/
-
 const scrapeTruckItem = async (url) => {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false,
     defaultViewport: {
       width: 1920,
       height: 1080,
@@ -96,7 +54,7 @@ const scrapeTruckItem = async (url) => {
   });
 
   const page = await browser.newPage();
-  await page.goto(url, { timeout: 8000 });
+  await page.goto(url);
 
   const pageData = await page.evaluate(() => {
     return {
@@ -136,18 +94,62 @@ const scrapeTruckItem = async (url) => {
 /** getNextPageUrl navigates to the next page **/
 
 const getNextPageUrl = async (page) => {
-  try {
-    while (
-      await page.$(
-        "ul.pagination-list > li[title='Next Page'][aria-disabled='false']"
-      )
-    ) {
-      await page.waitForSelector("ul.pagination-list > li[title='Next Page']", {
-        waitUntil: "domcontentloaded",
-      });
-      await page.click("ul.pagination-list > li[title='Next Page']");
+  let isBtnDisabled = false;
+  let pageNo = 1;
+  while (!isBtnDisabled) {
+    await page.waitForSelector("ul.pagination-list > li[title='Next Page']", {
+      visible: true,
+    });
+
+    const adsAvailable = await getTotalAdsCount(page);
+    console.log("Total Ads Available: ", adsAvailable);
+
+    // /** Code for usecase of addItems function **/
+    const listItems = await addItems(page);
+    let json = JSON.stringify(listItems);
+    // code for exporting data to a json file
+    fs.writeFile(`listItems_${pageNo}.json`, json, "utf8", (err) => {
+      if (err) throw err;
+      console.log(`JSON Exporting from page ${pageNo} Completed!`);
+    });
+
+    /** Code for using the Single Scrapper Function to scrap single items **/
+    const allAdsLinks = await page.$$eval(
+      "article[data-testid='listing-ad'] > div > h2 > a",
+      (ads) => ads.map((ad) => ad.href)
+    );
+
+    const scrapedData = [];
+    try {
+      for (let link of allAdsLinks) {
+        const data = await scrapeTruckItem(link);
+        scrapedData.push(data);
+      }
+    } catch (error) {
+      console.log(error);
     }
-  } catch (error) {
-    console.log(error);
+
+    /** Code for exporting data to Excel Sheet **/
+    const ab = xlsx.utils.book_new();
+    const as = xlsx.utils.json_to_sheet(scrapedData);
+    xlsx.utils.book_append_sheet(ab, as);
+    xlsx.writeFile(ab, `truckItems_page_${pageNo}.xlsx`);
+    console.log(
+      `Extracting all Truck Item data from page ${pageNo} Completed!`
+    );
+
+    const isDisabled =
+      (await page.$(
+        "ul.pagination-list > li[title='Next Page'][aria-disabled='true']"
+      )) !== null;
+
+    isBtnDisabled = isDisabled;
+    pageNo++;
+    if (!isDisabled) {
+      await Promise.all([
+        page.click("ul.pagination-list > li[title='Next Page']"),
+        page.waitForNavigation({ waitUntil: "networkidle2" }),
+      ]);
+    }
   }
 };

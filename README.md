@@ -14,6 +14,8 @@ https://www.otomoto.pl/ciezarowe/uzytkowe/mercedes-benz/od-2014/q-actros?search%
 
 It will use Puppeteer for handling events in the browser level and cheerio for parsing HTML output in some cases to extract desired data.
 
+It might take time upto ~= 15 to 20 minutes for the total scrapping to be completed depending on network speed. So, I request you to be patient after running the script and you can keep an eye on the console to have a rough idea about the progress of the process.
+
 ---
 
 ## Requirements
@@ -56,13 +58,14 @@ External packages used:
 
 > ### getNextPageUrl (page) -->
 >
-> It navigate to the next page. It has some sort of bug because of the behaviour of the page loading.
+> Previously mentioned other three functions are being invoked here.
+> It primarily navigates to the next page. It will stop working if next page is not is available.
 
 <br/><br/>
 
 ## Following are thoughts or questions/answers:
 
-1. Used Try-Catch block wehre seemed necessary. Can use it in more places to making the error handling process smoother. Also used bulting timeout parameter when loading page to avoid long delay and other errors.
+1. Used Try-Catch block wehre seemed necessary. Can use it in more places to making the error handling process smoother. We can use built-in timeout option in puppeteer to handle timeout errors.
 
 2. I was not 100% sure about what was meant by "Accessing more ads from this link than the limit allows (max 50 pages)?". But I think we can replicate the API call format used by otomoto to access more data then we are allowed to access.
 
@@ -70,4 +73,6 @@ External packages used:
 
 4. I've researched a bit and found that we can use mitm proxy tool for scrapping mobile applications (like otomot) but not 100% sure how to do that. But can give that a try later if needed.
 
-5. The performance can be improved by adding some waiting function. (like waitForUntil and its various values)
+5. The performance can be improved by adding some waiting function. (like waitForUntil and its various values).
+
+6. Codes can be more cleaner by making it more modular. By modular I mean that extracting various functions to separate file and importing them from there to use in the main index.js file.
