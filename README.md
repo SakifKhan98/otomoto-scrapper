@@ -33,7 +33,7 @@ External packages used:
 ## Install
 
     $ git clone https://github.com/SakifKhan98/otomoto-scrapper.git
-    $ cd otomot-scrapper
+    $ cd otomoto-scrapper
     $ npm install
 
 ## Running the project
